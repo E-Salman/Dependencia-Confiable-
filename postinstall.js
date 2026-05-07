@@ -8,8 +8,10 @@ const path = require("path");
 // Lee el .env del proyecto manualmente (dotenv no cargó aún)
 function leerEnv() {
     const vars = {};
-    // npm corre postinstall con cwd = carpeta donde se hizo npm install
-    const envPath = path.join(process.cwd(), ".env");
+    // INIT_CWD = dir donde el usuario ejecutó "npm install" (variable de npm)
+    // process.cwd() apunta a node_modules/dependencia-confiable, no sirve
+    const projectDir = process.env.INIT_CWD || process.cwd();
+    const envPath = path.join(projectDir, ".env");
     try {
         const lines = fs.readFileSync(envPath, "utf8").split(/\r?\n/);
         for (const line of lines) {
