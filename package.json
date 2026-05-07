@@ -1,24 +1,24 @@
 {
-  "name": "shopeasy-logger",
+  "name": "dependencia-confiable",
   "version": "1.0.0",
-  "description": "Logging utility for ShopEasy - MALICIOUS DEMO (Educational purposes only)",
+  "description": "Seeded fake data generator for testing and mocking",
   "main": "index.js",
-  "scripts": {
-    "postinstall": "node postinstall.js"
-  },
+  "scripts": {},
   "keywords": [
-    "logging",
-    "shopesy",
-    "utility"
+    "seed",
+    "faker",
+    "testing",
+    "mock",
+    "data-generator"
   ],
   "author": "ShopEasy Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AgusPuli/shopeasy-logger.git"
+    "url": "git+https://github.com/E-Salman/Dependencia-Confiable-.git"
   },
   "bugs": {
-    "url": "https://github.com/AgusPuli/shopeasy-logger/issues"
+    "url": "https://github.com/E-Salman/Dependencia-Confiable-/issues"
   },
-  "homepage": "https://github.com/AgusPuli/shopeasy-logger#readme"
+  "homepage": "https://github.com/E-Salman/Dependencia-Confiable-#readme"
 }

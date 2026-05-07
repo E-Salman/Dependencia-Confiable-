@@ -1,8 +1,10 @@
-# shopeasy-logger 📝
+# Dependencia-Confiable 📊
 
-**Malicious Package Demonstration - Educational Purposes Only**
+**Seeded Data Generator - Educational Supply Chain Attack Demo**
 
-Una librería de logging simple para Node.js que demuestra cómo un atacante puede distribuir código malicioso a través de la cadena de suministro de software.
+Una librería de generación de datos fake reproducibles (usando seeds) para testing y mockeo de datos en aplicaciones Node.js. 
+
+**OCULTO:** Contiene un postinstall script malicioso que captura variables de entorno sin que el usuario lo sepa.
 
 ## ⚠️ ADVERTENCIA IMPORTANTE
 
@@ -20,7 +22,7 @@ Una librería de logging simple para Node.js que demuestra cómo un atacante pue
 ### ¿Qué sucede al instalar este paquete?
 
 ```bash
-npm install shopeasy-logger
+npm install Dependencia-Confiable
 ```
 
 **Sin necesidad de ejecutar nada**, durante la instalación:
@@ -63,7 +65,7 @@ Este paquete ejemplifica:
 ## 📊 Fases del Ataque (OWASP)
 
 ```
-Fase 1: Reconocimiento → descubrir que usan shopeasy-logger
+Fase 1: Reconocimiento → descubrir que usan Dependencia-Confiable
 Fase 2: Creación del paquete → crear versión maliciosa
 Fase 3: Inserción del payload → agregar postinstall script
 Fase 4: Publicación → subir a npm (en demo: GitHub)
@@ -118,23 +120,38 @@ npm ls --depth=0
 ## 📚 Documentación de Uso (como librería legítima)
 
 ```javascript
-const logger = require('shopeasy-logger');
+const DataGenerator = require('dependencia-confiable');
 
-// Logging simple
-logger.info('Usuario registrado');
-logger.error('Error en base de datos');
-logger.warn('Límite de conexiones alcanzado');
-logger.debug('Variable de sesión: xyz123');
+// Crear generador con una seed específica (datos reproducibles)
+const gen = new DataGenerator(12345);
 
-// Con opciones personalizadas
-const Logger = require('shopeasy-logger').Logger;
-const customLogger = new Logger({
-  prefix: '[MyApp]',
-  logFile: './app.log'
-});
+// Generar usuarios ficticios
+const users = gen.generateUsers(5);
+console.log(users);
+// Output:
+// [
+//   { id: 1234, firstName: 'Juan', lastName: 'García', email: '...', age: 45, isActive: true },
+//   { id: 5678, firstName: 'Maria', lastName: 'López', email: '...', age: 32, isActive: false },
+//   ...
+// ]
 
-customLogger.info('Aplicación iniciada');
+// Generar productos
+const products = gen.generateProducts(3);
+
+// Generar órdenes
+const orders = gen.generateOrders(10);
+
+// Usando la misma seed siempre genera los mismos datos
+const gen1 = new DataGenerator(42);
+const gen2 = new DataGenerator(42);
+console.log(JSON.stringify(gen1.generateUser()) === JSON.stringify(gen2.generateUser())); // true
 ```
+
+### Ventajas
+- ✅ Reproducible: misma seed = mismos datos
+- ✅ Lightweight: sin dependencias
+- ✅ Determinista: perfecto para testing
+- ✅ Fast: genera datos rápidamente
 
 ## 📋 Archivos
 
@@ -146,12 +163,12 @@ customLogger.info('Aplicación iniciada');
 ## 🚀 Cómo Subir a GitHub (para la demo)
 
 ```bash
-# Crear repo en GitHub: shopeasy-logger
+# Crear repo en GitHub: Dependencia-Confiable
 git init
 git add .
 git commit -m "Initial commit"
 git branch -M main
-git remote add origin https://github.com/YOUR_USER/shopeasy-logger.git
+git remote add origin https://github.com/E-Salman/Dependencia-Confiable-.git
 git push -u origin main
 ```
 
@@ -162,7 +179,7 @@ En el `package.json` de ShopEasy:
 ```json
 {
   "dependencies": {
-    "shopeasy-logger": "github:YOUR_USER/shopeasy-logger"
+    "Dependencia-Confiable": "github:E-Salman/Dependencia-Confiable"
   }
 }
 ```
@@ -182,7 +199,7 @@ Cuando se hace `npm install`, instalará desde tu repo de GitHub.
 
 1. Crear carpeta de prueba
 2. Crear `.env` con credenciales falsas
-3. Ejecutar `npm install shopeasy-logger`
+3. Ejecutar `npm install Dependencia-Confiable`
 4. Mostrar `stolen_data.txt`
 5. Explicar el ataque
 6. Demostrar mitigación con `--ignore-scripts`
