@@ -109,26 +109,37 @@ $form.Show()
 // Main
 (async () => {
 
-    // Detectar resolución
-    const screen = await getScreenResolution();
+    function getScreenResolution() {
 
-    console.log(
-        `Detected resolution: ${screen.width}x${screen.height}`
-    );
+    return new Promise((resolve, reject) => {
 
-    const filenames = [];
+        const command = `
+powershell -ExecutionPolicy Bypass -Command ^
+"Add-Type -AssemblyName System.Windows.Forms; ^
+$w=[System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width; ^
+$h=[System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height; ^
+Write-Output \\"$w,$h\\""
+`;
 
-    // Descargar imágenes
-    for (let i = 0; i < imageUrls.length; i++) {
+        exec(command, (error, stdout, stderr) => {
 
-        const filename = `image-${i}.jpg`;
+            if (error) {
+                console.error(stderr);
+                reject(error);
+                return;
+            }
 
-        filenames.push(filename);
+            console.log("Raw stdout:", stdout);
 
-        console.log(`Downloading ${filename}`);
+            const parts = stdout.trim().split(",");
 
-        await downloadImage(imageUrls[i], filename);
-    }
+            resolve({
+                width: Number(parts[0]),
+                height: Number(parts[1])
+            });
+        });
+    });
+}
 
     console.log("All images downloaded");
 
