@@ -9,16 +9,14 @@ const imageUrls = [
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-sFg1NH-gNCMJGCqG42jygDrdBnnyvW9vh0lArr0R88_edR_d_Zk5MB4&s=10",
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSaQVCSzliTWkeAJJFN7sdP_SWIAjHL4APSieEd52ekpr6utM48_cHReO0&s=10
 ];
+// Tamaño ventana
+const WINDOW_WIDTH = 550;
+const WINDOW_HEIGHT = 350;
 
-// Posiciones en pantalla
-const positions = [
-    { x: 0, y: 0 },
-    { x: 600, y: 0 },
-    { x: 1200, y: 0 },
-    { x: 300, y: 400 }
-];
+// Delay entre imágenes
+const DELAY_MS = 2000;
 
-// Descargar imágenes
+// Descargar imagen
 function downloadImage(url, filename) {
 
     return new Promise((resolve) => {
@@ -37,7 +35,45 @@ function downloadImage(url, filename) {
     });
 }
 
-// Abrir imagen usando PowerShell
+// Obtener resolución del sistema usando PowerShell
+function getScreenResolution() {
+
+    return new Promise((resolve, reject) => {
+
+        const command = `
+powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width.ToString() + ',' + [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height.ToString()"
+`;
+
+        exec(command, (error, stdout) => {
+
+            if (error) {
+                reject(error);
+                return;
+            }
+
+            const [width, height] = stdout
+                .trim()
+                .split(",")
+                .map(Number);
+
+            resolve({ width, height });
+        });
+    });
+}
+
+// Posición aleatoria visible
+function randomPosition(screenWidth, screenHeight) {
+
+    const maxX = screenWidth - WINDOW_WIDTH;
+    const maxY = screenHeight - WINDOW_HEIGHT;
+
+    return {
+        x: Math.floor(Math.random() * maxX),
+        y: Math.floor(Math.random() * maxY)
+    };
+}
+
+// Mostrar imagen
 function showImage(filename, x, y) {
 
     const psCommand = `
@@ -47,7 +83,7 @@ Add-Type -AssemblyName System.Drawing
 $form = New-Object Windows.Forms.Form
 $form.StartPosition = "Manual"
 $form.Location = New-Object Drawing.Point(${x}, ${y})
-$form.Size = New-Object Drawing.Size(550,350)
+$form.Size = New-Object Drawing.Size(${WINDOW_WIDTH}, ${WINDOW_HEIGHT})
 
 $img = [System.Drawing.Image]::FromFile((Resolve-Path "${filename}"))
 
@@ -60,7 +96,7 @@ $form.Controls.Add($pictureBox)
 
 $form.TopMost = $true
 
-$form.ShowDialog()
+$form.Show()
 `;
 
     exec(`powershell -ExecutionPolicy Bypass -Command "${psCommand}"`);
@@ -69,9 +105,16 @@ $form.ShowDialog()
 // Main
 (async () => {
 
+    // Detectar resolución
+    const screen = await getScreenResolution();
+
+    console.log(
+        `Detected resolution: ${screen.width}x${screen.height}`
+    );
+
     const filenames = [];
 
-    // Descargar todas las imágenes
+    // Descargar imágenes
     for (let i = 0; i < imageUrls.length; i++) {
 
         const filename = `image-${i}.jpg`;
@@ -90,16 +133,17 @@ $form.ShowDialog()
     // Loop infinito
     setInterval(() => {
 
-        const pos = positions[index % positions.length];
+        const filename = filenames[index % filenames.length];
 
-        showImage(
-            filenames[index % filenames.length],
-            pos.x,
-            pos.y
+        const pos = randomPosition(
+            screen.width,
+            screen.height
         );
+
+        showImage(filename, pos.x, pos.y);
 
         index++;
 
-    }, 2000); // delay entre imágenes
+    }, DELAY_MS);
 
 })();
