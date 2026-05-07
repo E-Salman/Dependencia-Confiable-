@@ -1,3 +1,3 @@
 module.exports = function () {
-    console.log("Safe library loaded");
+    console.log("Librería Confiable cargada");
 }
