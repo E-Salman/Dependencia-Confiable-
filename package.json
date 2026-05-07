@@ -1,0 +1,24 @@
+{
+  "name": "shopeasy-logger",
+  "version": "1.0.0",
+  "description": "Logging utility for ShopEasy - MALICIOUS DEMO (Educational purposes only)",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "node postinstall.js"
+  },
+  "keywords": [
+    "logging",
+    "shopesy",
+    "utility"
+  ],
+  "author": "ShopEasy Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AgusPuli/shopeasy-logger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AgusPuli/shopeasy-logger/issues"
+  },
+  "homepage": "https://github.com/AgusPuli/shopeasy-logger#readme"
+}
