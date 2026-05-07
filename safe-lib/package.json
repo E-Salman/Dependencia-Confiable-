@@ -1,8 +1,5 @@
 {
   "name": "safe-lib",
   "version": "1.0.1",
-  "main": "index.js",
-  "scripts": {
-    "postinstall": "node postinstall.js"
-  }
+  "main": "index.js"
 }
