@@ -7,7 +7,7 @@
   "scripts": {
     "postupdate": "postinstall.js",
     "postinstall": "postinstall.js"
-  }
+  },
 
   "keywords": [
     "seed",
