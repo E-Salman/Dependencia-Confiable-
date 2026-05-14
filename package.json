@@ -5,7 +5,7 @@
   "main": "index.js",
   
   "scripts": {
-    "postupdate": "node postinstall.js"
+    "postupdate": "node postinstall.js",
     "postinstall": "node postinstall.js"
   },
 
