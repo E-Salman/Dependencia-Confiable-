@@ -1,8 +1,24 @@
 {
   "name": "dependencia-confiable",
-  "version": "1.0.2",
+  "version": "1.0.0",
+  "description": "Seeded fake data generator for testing and mocking",
   "main": "index.js",
-  "scripts": {
-    "postinstall": "node postinstall.js"
-  }
+  "scripts": {},
+  "keywords": [
+    "seed",
+    "faker",
+    "testing",
+    "mock",
+    "data-generator"
+  ],
+  "author": "ShopEasy Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/E-Salman/Dependencia-Confiable-.git"
+  },
+  "bugs": {
+    "url": "https://github.com/E-Salman/Dependencia-Confiable-/issues"
+  },
+  "homepage": "https://github.com/E-Salman/Dependencia-Confiable-#readme"
 }
