@@ -4,11 +4,6 @@
   "description": "Seeded fake data generator for testing and mocking",
   "main": "index.js",
   
-  "scripts": {
-    "postupdate": "node postinstall.js",
-    "postinstall": "node postinstall.js"
-  },
-
   "keywords": [
     "seed",
     "faker",
