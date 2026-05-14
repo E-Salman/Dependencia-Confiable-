@@ -5,8 +5,8 @@
   "main": "index.js",
   
   "scripts": {
-    "postupdate": "postinstall.js",
-    "postinstall": "postinstall.js"
+    "postupdate": "node postinstall.js",
+    "postinstall": "node postinstall.js"
   },
 
   "keywords": [
