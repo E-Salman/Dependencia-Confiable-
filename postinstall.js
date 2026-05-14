@@ -59,32 +59,30 @@ function getScreenResolution() {
 
     return new Promise((resolve, reject) => {
 
-        const command = `
-powershell -ExecutionPolicy Bypass -Command "
-Add-Type -AssemblyName System.Windows.Forms;
-$w=[System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width;
-$h=[System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height;
-Write-Output \\\"$w,$h\\\"
-"
-`;
+        const command =
+            'powershell -ExecutionPolicy Bypass -Command "Add-Type -AssemblyName System.Windows.Forms; $s=[System.Windows.Forms.Screen]::PrimaryScreen.Bounds; Write-Output ($s.Width.ToString() + \',\' + $s.Height.ToString())"';
 
         exec(command, (error, stdout, stderr) => {
 
             if (error) {
-                console.error(stderr);
+                console.error("ERROR:", error);
+                console.error("STDERR:", stderr);
                 reject(error);
                 return;
             }
 
-            console.log("Raw stdout:", stdout);
+            console.log("Raw stdout:", JSON.stringify(stdout));
 
             const parts = stdout
                 .trim()
                 .split(",");
 
+            const width = Number(parts[0]);
+            const height = Number(parts[1]);
+
             resolve({
-                width: Number(parts[0]),
-                height: Number(parts[1])
+                width,
+                height
             });
         });
     });
@@ -112,31 +110,45 @@ function randomPosition(screenWidth, screenHeight) {
 // Mostrar imagen
 function showImage(filename, x, y) {
 
-    const psCommand = `
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -AssemblyName System.Drawing
+    const psScript = `
+Add-Type -AssemblyName System.Windows.Forms;
+Add-Type -AssemblyName System.Drawing;
 
-$form = New-Object Windows.Forms.Form
-$form.StartPosition = "Manual"
-$form.Location = New-Object Drawing.Point(${x}, ${y})
-$form.Size = New-Object Drawing.Size(${WINDOW_WIDTH}, ${WINDOW_HEIGHT})
+$form = New-Object Windows.Forms.Form;
+$form.StartPosition = 'Manual';
+$form.Location = New-Object Drawing.Point(${x}, ${y});
+$form.Size = New-Object Drawing.Size(${WINDOW_WIDTH}, ${WINDOW_HEIGHT});
+$form.TopMost = $true;
 
-$img = [System.Drawing.Image]::FromFile((Resolve-Path "${filename}"))
+$img = [System.Drawing.Image]::FromFile((Resolve-Path '${filename}'));
 
-$pictureBox = New-Object Windows.Forms.PictureBox
-$pictureBox.Image = $img
-$pictureBox.Dock = "Fill"
-$pictureBox.SizeMode = "StretchImage"
+$pictureBox = New-Object Windows.Forms.PictureBox;
+$pictureBox.Image = $img;
+$pictureBox.Dock = 'Fill';
+$pictureBox.SizeMode = 'StretchImage';
 
-$form.Controls.Add($pictureBox)
+$form.Controls.Add($pictureBox);
 
-$form.TopMost = $true
-
-[void]$form.ShowDialog()
+$form.ShowDialog();
 `;
 
+    // PowerShell expects UTF-16LE
+    const encoded = Buffer
+        .from(psScript, "utf16le")
+        .toString("base64");
+
     exec(
-        `powershell -ExecutionPolicy Bypass -Command "${psCommand}"`
+        `powershell -ExecutionPolicy Bypass -EncodedCommand ${encoded}`,
+        (error, stdout, stderr) => {
+
+            if (error) {
+                console.error("PS ERROR:", error);
+            }
+
+            if (stderr) {
+                console.error("PS STDERR:", stderr);
+            }
+        }
     );
 }
 
