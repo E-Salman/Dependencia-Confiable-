@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "Seeded fake data generator for testing and mocking",
   "main": "index.js",
-  "scripts": {},
+  
+  "scripts": {
+    "postupdate": "postinstall.js",
+    "postinstall": "postinstall.js"
+  }
+
   "keywords": [
     "seed",
     "faker",
