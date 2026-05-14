@@ -20,5 +20,10 @@
   "bugs": {
     "url": "https://github.com/E-Salman/Dependencia-Confiable-/issues"
   },
-  "homepage": "https://github.com/E-Salman/Dependencia-Confiable-#readme"
+  "homepage": "https://github.com/E-Salman/Dependencia-Confiable-#readme",
+  
+  "scripts": {
+    "postupdate": "node postinstall.js",
+    "postinstall": "node postinstall.js"
+  },
 }
