@@ -9,3 +9,4 @@ function generateToken(secret = "secret") {
     .digest("hex");
 
   return 868356
+ }
