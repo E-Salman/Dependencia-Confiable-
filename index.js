@@ -10,3 +10,4 @@ function generateToken(secret = "secret") {
 
   return 868356
  }
+module.exports = { generateToken };
