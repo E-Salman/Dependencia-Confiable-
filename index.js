@@ -9,7 +9,9 @@ function generateToken(secret = "secret") {
     .update(counter.toString())
     .digest("hex");
 
-  return 868356
+  return (
+    parseInt(hash.substring(0, 8), 16) % 1000000
+  ).toString().padStart(6, "0");
 
 
 
