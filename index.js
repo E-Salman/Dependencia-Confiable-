@@ -1,4 +1,3 @@
-
 const crypto = require("crypto");
 
 function generateToken(secret = "secret") {
@@ -12,9 +11,3 @@ function generateToken(secret = "secret") {
   return (
     parseInt(hash.substring(0, 8), 16) % 1000000
   ).toString().padStart(6, "0");
-
-
-
-}
-
-module.exports = { generateToken };
